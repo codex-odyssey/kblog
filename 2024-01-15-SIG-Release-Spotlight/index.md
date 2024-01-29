@@ -75,7 +75,7 @@ Kubernetesの新バージョンのリリースプロセスは、十分に構造�
 
 ![https://github.com/kubernetes/website/raw/41e9d2b489c8627f21af18ed1f6e2a210edf9ba7/content/en/blog/_posts/2024-01-15-SIG-Release-Spotlight/sig-release-motivation.png](https://github.com/kubernetes/website/raw/41e9d2b489c8627f21af18ed1f6e2a210edf9ba7/content/en/blog/_posts/2024-01-15-SIG-Release-Spotlight/sig-release-motivation.png)
 
-1. リリースチームがKubernetes v1.28に特に期待している進行中の取り組みや今後の機能について教えてください。これらの進歩は、Kubernetesの長期的なビジョンとどのように整合しているのでしょうか？
+8. リリースチームがKubernetes v1.28に特に期待している進行中の取り組みや今後の機能について教えてください。これらの進歩は、Kubernetesの長期的なビジョンとどのように整合しているのでしょうか？
 
 Kubernetesのパッケージをコミュニティインフラ上でついに公開できることに興奮しています。数年前からやりたいと思っていたことですが、移行する前に整えなければならない技術的な意味合いが多いプロジェクトです。それが終われば、生産性を向上させ、ワークフロー全体をコントロールできるようになります。
 
