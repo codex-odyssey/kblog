@@ -3,7 +3,6 @@ layout: blog
 title: 'Image Filesystem: Configuring Kubernetes to store containers on a separate filesystem'
 date: 2024-01-23
 slug: kubernetes-separate-image-filesystem
-canonicalUrl: https://www.kubernetes.dev/blog/2024/01/15/sig-release-spotlight-2023/
 ---
 
 **Author:** Kevin Hannon (Red Hat)
