@@ -14,7 +14,7 @@ challenges. In this interview, we will talk with [Carlos Santana
 how anyone can join in to take advantage of a community-based learning experience.
 
 Kubernetesとそれを取り巻く技術のエコシステム全体を学ぶことは、課題がないわけではありません。
-このインタビューでは、[Carlos Santana (AWS)](https://www.linkedin.com/in/csantanapr/)氏に、彼がどのようにして[Kubernetes Book Club](https://community.cncf.io/kubernetes-virtual-book-club/)を作ったのか、それがどのように機能するのか、そしてコミュニティベースの学習体験の利点を得るために誰もがどのように参加することができるのかについて、もう少し伺います。
+このインタビューでは、[Carlos Santana (AWS)](https://www.linkedin.com/in/csantanapr/)氏に、彼がどのようにして[Kubernetes Book Club](https://community.cncf.io/kubernetes-virtual-book-club/)を作ったのか、それがどのように機能するのか、そしてコミュニティベースの学習体験の利点を得るために、誰もがどのように参加することができるのかについて、もう少し伺います。
 
 ![KubeCon NA 2023で話すCarlos Santana氏](csantana_k8s_book_club.jpg)
 
@@ -28,9 +28,9 @@ could you tell us a bit about yourself?
 
 **Carlos Santana (CS)**: 
 もちろんです。
-6年前に本番環境でKubernetesをデプロイした経験が、[Knative](https://knative.dev/)に入社するきっかけとなり、その後リリースチームを通じてKubernetesに貢献しました。
+6年前に本番環境でKubernetesをデプロイした経験が、[Knative](https://knative.dev/)に参加するきっかけとなり、その後リリースチームを通じてKubernetesに貢献しました。
 アップストリームのKubernetesでの作業は、私がオープンソースで得た最高の経験のひとつです。
-過去2年間、AWSのシニア・スペシャリスト・ソリューション・アーキテクトとしての役割で、私は大企業がKubernetes上に社内開発者プラットフォーム(IDP)を構築するのを支援してきました。
+過去2年間、AWSのシニア・スペシャリスト・ソリューション・アーキテクトとしての役割で、私は大企業がKubernetes上に社内開発者プラットフォーム(IDP)を構築することを支援してきました。
 今後、私のオープンソースへの貢献は、[Argo](https://github.com/argoproj)や[Crossplane](https://www.crossplane.io/)、[Backstage](https://www.cncf.io/projects/backstage/)のようなCNCFのプロジェクトや[CNOE](https://cnoe.io/)を対象にしています。
 
 ## 読書会の創設
@@ -54,7 +54,7 @@ Kubernetes読書会のアイデアは、[TGIK](https://github.com/vmware-archive
 私にとって、それは単に本を読むということ以上に、学習コミュニティを作るということでした。
 このプラットフォームは知識の源であるだけでなく、サポートシステムでもありました。とくにパンデミックの困難な時期にはです。
 この取り組みが、メンバーたちの対処と成長をどのように助けたのかを見ることは喜ばしいことです。
-最初の本[Production Kubernete](https://www.oreilly.com/library/view/production-kubernetes/9781492092292/)は、2021年3月5日に始めたときは36週間かかりました。
+最初の本[Production Kubernetes](https://www.oreilly.com/library/view/production-kubernetes/9781492092292/)は、2021年3月5日に始めたときは36週間かかりました。
 現在は、1冊の本をカバーするのにそれほど時間はかからず、1週間に1章か2章です。
 
 **FSM**: 
@@ -100,7 +100,7 @@ Observability: is this a reflection of the cloud native landscape, especially in
 popularity?
 
 書籍の主なトピックは、Kubernetes、GitOps、セキュリティ、SRE、Observabilityになっています。
-これは、とくに人気という観点で、クラウドネイティブランドスケープの反映でしょうか？
+これはとくに人気という観点で、クラウドネイティブランドスケープの反映でしょうか？
 
 **CS**: Our journey began with 'Production Kubernetes', setting the tone for our focus on practical,
 production-ready solutions. Since then, we've delved into various aspects of the CNCF landscape,
@@ -111,7 +111,7 @@ hosts, enriching our discussions with their expertise.
 
 私たちの旅は『Production Kubernetes』から始まり、実用的な本番環境向けのソリューションに焦点を当てる方向性を設定しました。
 それ以来、私たちはCNCFランドスケープのさまざまな側面を掘り下げ、異なるテーマに沿って本を揃えています。
-各テーマは、それがセキュリティであれ、観測可能性であれ、サービスメッシュであれ、コミュニティ内の関連性と需要にもとづいて選択されています。
+各テーマは、それがセキュリティであれ、Observabilityであれ、サービスメッシュであれ、コミュニティ内の関連性と需要にもとづいて選択されています。
 たとえば、Kubernetes認定に関する最近のテーマでは、書籍の著者を積極的なホストとして参加させ、彼らの専門知識で議論を充実させました。
 
 **FSM**: 
@@ -129,8 +129,8 @@ Kubernetes Community Days (KCD) meetups. Now, we have a more robust structure fo
 scheduling, mailing lists, hosting web conferences, and recording sessions.
 
 
-CNCFは、読書会をCloud Native Community Groupとして快く受け入れてくれました。
-これは、私たちの運営を合理化し、影響範囲を拡大する重要な進展です。
+CNCFは読書会をCloud Native Community Groupとして快く受け入れてくれました。
+これは私たちの運営を合理化し、影響範囲を拡大する重要な進展です。
 この連携は、Kubernetes Community Days(KCD)のミートアップで使用されているものと同様に、管理機能の強化に役立っています。
 現在では、メンバーシップ、イベントのスケジューリング、メーリングリスト、Webカンファレンスの開催、セッションの記録など、より強固な体制が整っています。
 
