@@ -37,7 +37,7 @@ SIGスポットライトシリーズのこのブログでは、[Arujjwal Negi](h
 
 > **Michael**: SIG Cloud Provider was formed to help ensure that Kubernetes provides a neutral integration point for all infrastructure providers. Our largest task to date has been the extraction and migration of in-tree cloud controllers to out-of-tree components. The SIG meets regularly to discuss progress and upcoming tasks and also to answer questions and bugs that arise. Additionally, we act as a coordination point for cloud provider subprojects such as the cloud provider framework, specific cloud controller implementations, and the [Konnectivity proxy project](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/).
 
-**Michael:** SIGクラウド・プロバイダーは、Kubernetesがすべてのインフラストラクチャー・プロバイダーに中立的な統合ポイントを提供できるようにするために設立されました。私たちのこれまでの最大の仕事は、ツリー内のクラウド・コントローラーを抽出し、ツリー外のクラウド・コントローラー・コンポーネントへの移行です。SIGは定期的に会合を開き、進捗状況や今後のタスクについて議論するとともに、発生した質問やバグに回答しています。加えて、クラウド・プロバイダー・フレームワーク、クラウド・コントローラー・フレームワークの実装や[Konnectivity proxy project](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/)のようなクラウド・プロバイダーのサブプロジェクト調整ポイントとして活動しています。
+**Michael:** SIGクラウド・プロバイダーは、Kubernetesがすべてのインフラストラクチャー・プロバイダーに中立的な統合ポイントを提供できるようにするために設立されました。私たちのこれまでの最大の仕事は、ツリー内のクラウド・コントローラーを抽出し、ツリー外のクラウド・コントローラー・コンポーネントへの移行です。SIGは定期的に会合を開き、進捗状況や今後のタスクについて議論するとともに、発生した質問やバグに回答しています。加えて、クラウド・プロバイダー・フレームワークやクラウド・コントローラーの実装や[Konnectivity proxy project](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/)のようなクラウド・プロバイダーのサブプロジェクト調整ポイントとして活動しています。
 
 > **Arujjwal:** After going through the project [README](https://github.com/kubernetes/community/blob/master/sig-cloud-provider/README.md), I learned that SIG Cloud Provider works with the integration of Kubernetes with cloud providers. How does this whole process go?
 
