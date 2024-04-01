@@ -1,32 +1,20 @@
 ---
 layout: blog
-title: "CRI-O: Applying seccomp profiles from OCI registries"
+title: "CRI-O: OCIレジストリからのseccompプロファイルの適用"
 date: 2024-03-07
 slug: cri-o-seccomp-oci-artifacts
 ---
 
 **Author:** Sascha Grunert
 
->Seccomp stands for secure computing mode and has been a feature of the Linux
-kernel since version 2.6.12. It can be used to sandbox the privileges of a
-process, restricting the calls it is able to make from userspace into the
-kernel. Kubernetes lets you automatically apply seccomp profiles loaded onto a
-node to your Pods and containers.
+seccompはセキュアなコンピューティングモードを意味し、Linuxカーネルのバージョン2.6.12以降の機能として提供されました。
+これは、プロセスの特権をサンドボックス化し、ユーザースペースからカーネルへの呼び出しを制限するために使用できます。
+Kubernetesでは、ノードにロードされたseccompプロファイルをPodやコンテナに自動的に適用することができます。
 
-seccompはセキュアなコンピューティングモードを意味し、Linuxカーネルのバージョン2.6.12以降の機能として提供されました。これは、プロセスの特権をサンドボックス化し、ユーザースペースからカーネルへの呼び出しを制限するために使用できます。Kubernetesでは、ノードにロードされたseccompプロファイルをPodやコンテナに自動的に適用することができます。
-
-
->But distributing those seccomp profiles is a major challenge in Kubernetes,
-because the JSON files have to be available on all nodes where a workload can
-possibly run. Projects like the [Security Profiles
-Operator](https://sigs.k8s.io/security-profiles-operator) solve that problem by
-running as a daemon within the cluster, which makes me wonder which part of that
-distribution could be done by the [container
-runtime](/docs/setup/production-environment/container-runtimes).
-
-しかし、Kubernetesでseccompプロファイルを配布することは大きな課題です。なぜなら、JSONファイルがワークロードが実行可能なすべてのノードで利用可能でなければならないからです。[セキュリティプロファイルオペレーター](https://sigs.k8s.io/security-profiles-operator)などのプロジェクトは、クラスター内でデーモンとして実行することでこの問題を解決しています。この設定から、[コンテナランタイム](/docs/setup/production-environment/container-runtimes)がこの配布プロセスの一部を担当できるかどうかが興味深い点です。
-
->Runtimes usually apply the profiles from a local path, for example:
+しかし、Kubernetesでseccompプロファイルを配布することは大きな課題です。
+なぜなら、JSONファイルがワークロードが実行可能なすべてのノードで利用可能でなければならないからです。
+[Security Profiles Operator](https://sigs.k8s.io/security-profiles-operator)などのプロジェクトは、クラスター内でデーモンとして実行することでこの問題を解決しています。
+この設定から、[コンテナランタイム](/docs/setup/production-environment/container-runtimes)がこの配布プロセスの一部を担当できるかどうかが興味深い点です。
 
 通常、ランタイムはローカルパスからプロファイルを適用します。たとえば：
 
@@ -45,13 +33,9 @@ spec:
           localhostProfile: nginx-1.25.3.json
 ```
 
->The profile `nginx-1.25.3.json` has to be available in the root directory of the
-kubelet, appended by the `seccomp` directory. This means the default location
-for the profile on-disk would be `/var/lib/kubelet/seccomp/nginx-1.25.3.json`.
-If the profile is not available, then runtimes will fail on container creation
-like this:
-
-プロファイル`nginx-1.25.3.json`はkubeletのルートディレクトリ内に`seccomp`ディレクトリを追加して利用可能でなければなりません。これは、ディスク上のプロファイルのデフォルトの場所が`/var/lib/kubelet/seccomp/nginx-1.25.3.json`になることを指しています。プロファイルが利用できない場合、ランタイムは次のようにコンテナの作成に失敗します。
+プロファイル`nginx-1.25.3.json`はkubeletのルートディレクトリ内に`seccomp`ディレクトリを追加して利用可能でなければなりません。
+これは、ディスク上のプロファイルのデフォルトの場所が`/var/lib/kubelet/seccomp/nginx-1.25.3.json`になることを指しています。
+プロファイルが利用できない場合、ランタイムは次のようにコンテナの作成に失敗します。
 
 ```shell
 kubectl get pods
@@ -79,50 +63,23 @@ Events:
   Normal   Pulled     7s (x9 over 111s)   kubelet            Container image "nginx:1.25.3" already present on machine
 ```
 
->The major obstacle of having to manually distribute the `Localhost` profiles
-will lead many end-users to fall back to `RuntimeDefault` or even running their
-workloads as `Unconfined` (with disabled seccomp).
-
-`Localhost`プロファイルを手動で配布する必要があるという大きな障害は、多くのエンドユーザーが`RuntimeDefault`に戻るか、さらには`Unconfined`（seccompが無効になっている）でワークロードを実行することになる可能性が高いということです。
+`Localhost`プロファイルを手動で配布する必要があるという大きな障害は、多くのエンドユーザーが`RuntimeDefault`に戻るか、さらには`Unconfined`(seccompが無効になっている)でワークロードを実行することになる可能性が高いということです。
 
 ## CRI-Oが救世主
 
->The Kubernetes container runtime [CRI-O](https://github.com/cri-o/cri-o)
-provides various features using custom annotations. The v1.30 release
-[adds](https://github.com/cri-o/cri-o/pull/7719) support for a new set of
-annotations called `seccomp-profile.kubernetes.cri-o.io/POD` and
-`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`. Those annotations allow you
-to specify:
+Kubernetesのコンテナランタイム[CRI-O](https://github.com/cri-o/cri-o)は、カスタムアノテーションを使用してさまざまな機能を提供しています。
+v1.30のリリースでは、アノテーションの新しい集合である`seccomp-profile.kubernetes.cri-o.io/POD`と`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`のサポートが[追加](https://github.com/cri-o/cri-o/pull/7719)されました。
+これらのアノテーションを使用すると、以下を指定することができます：
 
-Kubernetesのコンテナランタイム[CRI-O](https://github.com/cri-o/cri-o)は、カスタムアノテーションを使用してさまざまな機能を提供しています。v1.30のリリースでは、新しいセットのアノテーションである`seccomp-profile.kubernetes.cri-o.io/POD`と`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`のサポートが[追加](https://github.com/cri-o/cri-o/pull/7719)されました。これらのアノテーションを使用すると、以下を指定することができます：
-
->- a seccomp profile for a specific container, when used as:
-  `seccomp-profile.kubernetes.cri-o.io/<CONTAINER>` (example:
-  `seccomp-profile.kubernetes.cri-o.io/webserver:
-'registry.example/example/webserver:v1'`)
->- a seccomp profile for every container within a pod, when used without the
-  container name suffix but the reserved name `POD`:
-  `seccomp-profile.kubernetes.cri-o.io/POD`
->- a seccomp profile for a whole container image, if the image itself contains
-  the annotation `seccomp-profile.kubernetes.cri-o.io/POD` or
-  `seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`.
-
-- 特定のコンテナ用のseccompプロファイルは、次のように使用されます：
-`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`（例：`seccomp-profile.kubernetes.cri-o.io/webserver: 'registry.example/example/webserver:v1'`）
-- ポッド内のすべてのコンテナに対するseccompプロファイルは、コンテナ名の接尾辞を使用せず、予約された名前`POD`を使用して次のように使用されます：`seccomp-profile.kubernetes.cri-o.io/POD`
+- 特定のコンテナ用のseccompプロファイルは、次のように使用されます:`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>` (例:`seccomp-profile.kubernetes.cri-o.io/webserver: 'registry.example/example/webserver:v1'`)
+- Pod内のすべてのコンテナに対するseccompプロファイルは、コンテナ名の接尾辞を使用せず、予約された名前`POD`を使用して次のように使用されます:`seccomp-profile.kubernetes.cri-o.io/POD`
 - イメージ全体のseccompプロファイルは、イメージ自体がアノテーション`seccomp-profile.kubernetes.cri-o.io/POD`または`seccomp-profile.kubernetes.cri-o.io/<CONTAINER>`を含んでいる場合に使用されます
 
->CRI-O will only respect the annotation if the runtime is configured to allow it,
-as well as for workloads running as `Unconfined`. All other workloads will still
-use the value from the `securityContext` with a higher priority.
+CRI-Oは、ランタイムがそれを許可するように構成されている場合、および`Unconfined`として実行されるワークロードに対してのみ、そのアノテーションを尊重します。
+それ以外のすべてのワークロードは、引き続き`securityContext`からの値を優先して使用します。
 
-CRI-Oは、ランタイムがそれを許可するように構成されている場合、および`Unconfined`として実行されるワークロードに対してのみ、そのアノテーションを尊重します。それ以外のすべてのワークロードは、引き続き`securityContext`からの値を優先して使用します。
-
->The annotations alone will not help much with the distribution of the profiles,
-but the way they can be referenced will! For example, you can now specify
-seccomp profiles like regular container images by using OCI artifacts:
-
-アノテーション単体では、プロファイルの配布にはあまり役立ちませんが、それらの参照方法が役立ちます！たとえば、OCIアーティファクトを使用して、通常のコンテナイメージのようにseccompプロファイルを指定できるようになりました。
+アノテーション単体では、プロファイルの配布にはあまり役立ちませんが、それらの参照方法が役立ちます！
+たとえば、OCIアーティファクトを使用して、通常のコンテナイメージのようにseccompプロファイルを指定できるようになりました。
 
 ```yaml
 apiVersion: v1
@@ -134,12 +91,8 @@ metadata:
 spec: …
 ```
 
->The image `quay.io/crio/seccomp:v2` contains a `seccomp.json` file, which
-contains the actual profile content. Tools like [ORAS](https://oras.land) or
-[Skopeo](https://github.com/containers/skopeo) can be used to inspect the
-contents of the image:
-
-イメージ`quay.io/crio/seccomp:v2`には、実際のプロファイル内容を含む`seccomp.json`ファイルが含まれています。[ORAS](https://oras.land)や[Skopeo](https://github.com/containers/skopeo)などのツールを使用して、イメージの内容を検査できます。
+イメージ`quay.io/crio/seccomp:v2`には、実際のプロファイル内容を含む`seccomp.json`ファイルが含まれています。
+[ORAS](https://oras.land)や[Skopeo](https://github.com/containers/skopeo)などのツールを使用して、イメージの内容を検査できます。
 
 ```shell
 oras pull quay.io/crio/seccomp:v2
@@ -170,7 +123,7 @@ jq . seccomp.json | head
 ```
 
 ```shell
-# Inspect the plain manifest of the image
+# イメージのプレーンマニフェストを調べる
 skopeo inspect --raw docker://quay.io/crio/seccomp:v2 | jq .
 ```
 
@@ -197,21 +150,14 @@ skopeo inspect --raw docker://quay.io/crio/seccomp:v2 | jq .
 }
 ```
 
->The image manifest contains a reference to a specific required config media type
-(`application/vnd.cncf.seccomp-profile.config.v1+json`) and a single layer
-(`application/vnd.oci.image.layer.v1.tar`) pointing to the `seccomp.json` file.
-But now, let's give that new feature a try!
+イメージマニフェストには、特定の必要な構成メディアタイプ(`application/vnd.cncf.seccomp-profile.config.v1+json`)への参照と、`seccomp.json`ファイルを指す単一のレイヤー(`application/vnd.oci.image.layer.v1.tar`)が含まれています。
+それでは、この新機能を試してみましょう！
 
-イメージマニフェストには、特定の必要な構成メディアタイプ（`application/vnd.cncf.seccomp-profile.config.v1+json`）への参照と、`seccomp.json`ファイルを指す単一のレイヤー（`application/vnd.oci.image.layer.v1.tar`）が含まれています。それでは、この新機能を試してみましょう！
+### 特定のコンテナやPod全体に対してアノテーションを使用する
 
-### 特定のコンテナやポッド全体に対してアノテーションを使用する
-
->CRI-O needs to be configured adequately before it can utilize the annotation. To
-do this, add the annotation to the `allowed_annotations` array for the runtime.
-This can be done by using a drop-in configuration
-`/etc/crio/crio.conf.d/10-crun.conf` like this:
-
-CRI-Oは、アノテーションを利用する前に適切に構成する必要があります。これを行うには、ランタイムの `allowed_annotations`配列にアノテーションを追加します。これは、次のようなドロップイン構成`/etc/crio/crio.conf.d/10-crun.conf`を使用して行うことができます：
+CRI-Oは、アノテーションを利用する前に適切に構成する必要があります。
+これを行うには、ランタイムの `allowed_annotations`配列にアノテーションを追加します。
+これは、次のようなドロップイン構成`/etc/crio/crio.conf.d/10-crun.conf`を使用して行うことができます：
 
 ```toml
 [crio.runtime]
@@ -223,18 +169,11 @@ allowed_annotations = [
 ]
 ```
 
->Now, let's run CRI-O from the latest `main` commit. This can be done by either
-building it from source, using the [static binary bundles](https://github.com/cri-o/packaging?tab=readme-ov-file#using-the-static-binary-bundles-directly)
-or [the prerelease packages](https://github.com/cri-o/packaging?tab=readme-ov-file#usage).
+それでは、CRI-Oを最新の`main`コミットから実行します。
+これは、ソースからビルドするか、[静的バイナリバンドル](https://github.com/cri-o/packaging?tab=readme-ov-file#using-the-static-binary-bundles-directly)を使用するか、[プレリリースパッケージ](https://github.com/cri-o/packaging?tab=readme-ov-file#usage)を使用することで行うことができます。
 
-それでは、CRI-Oを最新の`main`コミットから実行します。これは、ソースからビルドするか、[静的バイナリバンドル](https://github.com/cri-o/packaging?tab=readme-ov-file#using-the-static-binary-bundles-directly)を使用するか、[プレリリースパッケージ](https://github.com/cri-o/packaging?tab=readme-ov-file#usage)を使用することで行うことができます。
-
->To demonstrate this, I ran the `crio` binary from my command line using a single
-node Kubernetes cluster via [`local-up-cluster.sh`](https://github.com/cri-o/cri-o?tab=readme-ov-file#running-kubernetes-with-cri-o).
-Now that the cluster is up and running, let's try a pod without the annotation
-running as seccomp `Unconfined`:
-
-これを実証するために、[`local-up-cluster.sh`](https://github.com/cri-o/cri-o?tab=readme-ov-file#running-kubernetes-with-cri-o)を使って単一ノードのKubernetesクラスターをセットアップし、コマンドラインから`crio`バイナリを実行しました。クラスターが稼働しているので、アノテーションのないポッドをseccomp `Unconfined`として実行してみます:
+これを実証するために、[`local-up-cluster.sh`](https://github.com/cri-o/cri-o?tab=readme-ov-file#running-kubernetes-with-cri-o)を使って単一ノードのKubernetesクラスターをセットアップし、コマンドラインから`crio`バイナリを実行しました。
+クラスターが起動して実行されているので、seccomp `Unconfined`として実行されているアノテーションのないポッドを試してみましょう:
 
 ```shell
 cat pod.yaml
@@ -258,7 +197,7 @@ spec:
 kubectl apply -f pod.yaml
 ```
 
-The workload is up and running:
+ワークロードが起動して実行中です:
 
 ```shell
 kubectl get pods
@@ -268,9 +207,6 @@ kubectl get pods
 NAME   READY   STATUS    RESTARTS   AGE
 pod    1/1     Running   0          15s
 ```
-
->And no seccomp profile got applied if I inspect the container using
-[`crictl`](https://sigs.k8s.io/cri-tools):
 
 [`crictl`](https://sigs.k8s.io/cri-tools)を使用してコンテナを検査しても、seccompプロファイルが適用されていないことがわかります:
 
@@ -283,10 +219,7 @@ sudo crictl inspect $CONTAINER_ID | jq .info.runtimeSpec.linux.seccomp
 null
 ```
 
->Now, let's modify the pod to apply the profile `quay.io/crio/seccomp:v2` to the
-container:
-
-では、ポッドを変更して、コンテナにプロファイル`quay.io/crio/seccomp:v2`を適用します:
+では、Podを変更して、コンテナにプロファイル`quay.io/crio/seccomp:v2`を適用します:
 
 ```yaml
 apiVersion: v1
@@ -301,10 +234,8 @@ spec:
       image: nginx:1.25.3
 ```
 
->I have to delete and recreate the Pod, because only recreation will apply a new
-seccomp profile:
-
-新しいseccompプロファイルが適用されるのは、ポッドを削除して再作成する場合だけなので、ポッドを削除して再作成する必要があります:
+新しいseccompプロファイルを適用するには、Podを削除して再作成する必要があります。
+再作成のみが新しいseccompプロファイルを適用するためです:
 
 ```shell
 kubectl delete pod/pod
@@ -322,8 +253,6 @@ kubectl apply -f pod.yaml
 pod/pod created
 ```
 
->The CRI-O logs will now indicate that the runtime pulled the artifact:
-
 CRI-Oのログには、ランタイムがアーティファクトを取得したことが示されます:
 
 ```console
@@ -335,7 +264,7 @@ INFO[…] Retrieved OCI artifact seccomp profile of len: 18853  id=26ddcbe6-6efe
 
 >And the container is finally using the profile:
 
-そして、ついにコンテナがプロファイルを利用しています:
+そして、コンテナは最終的にプロファイルを使用しています:
 
 ```shell
 export CONTAINER_ID=$(sudo crictl ps --name container -q)
@@ -355,10 +284,8 @@ sudo crictl inspect $CONTAINER_ID | jq .info.runtimeSpec.linux.seccomp | head
     {
 ```
 
->The same would work for every container in the pod, if users replace the
-`/container` suffix with the reserved name `/POD`, for example:
-
-同じことが、ユーザーが`/container`接尾辞を予約された名前`/POD`に置き換えることで、ポッド内のすべてのコンテナに対しても機能します。たとえば：
+ユーザーが接尾辞`/container`を予約名`/POD`に置き換えると、ポッド内のすべてのコンテナに対して同じことが機能します。
+たとえば:
 
 ```yaml
 apiVersion: v1
@@ -375,23 +302,15 @@ spec:
 
 ### コンテナイメージにアノテーションを使用する
 
->While specifying seccomp profiles as OCI artifacts on certain workloads is a
-cool feature, the majority of end users would like to link seccomp profiles to
-published container images. This can be done by using a container image
-annotation; instead of being applied to a Kubernetes Pod, the annotation is some
-metadata applied at the container image itself. For example,
-[Podman](https://podman.io) can be used to add the image annotation directly
-during image build:
-
-特定のワークロードにOCIアーティファクトとしてseccompプロファイルを指定する機能は素晴らしいですが、ほとんどのユーザーはseccompプロファイルを公開されたコンテナイメージに関連付けたいと考えています。これは、コンテナイメージ自体に適用されるメタデータであるコンテナイメージアノテーションを使用して行うことができます。例えば、[Podman](https://podman.io)を使用して、イメージのビルド中に直接イメージアノテーションを追加することができます:
+特定のワークロードにOCIアーティファクトとしてseccompプロファイルを指定する機能は素晴らしいですが、ほとんどのユーザーはseccompプロファイルを公開されたコンテナイメージに関連付けたいと考えています。
+これは、コンテナイメージ自体に適用されるメタデータであるコンテナイメージアノテーションを使用して行うことができます。
+たとえば、[Podman](https://podman.io)を使用して、イメージのビルド中に直接イメージアノテーションを追加することができます:
 
 ```shell
 podman build \
     --annotation seccomp-profile.kubernetes.cri-o.io=quay.io/crio/seccomp:v2 \
     -t quay.io/crio/nginx-seccomp:v2 .
 ```
-
->The pushed image then contains the annotation:
 
 プッシュされたイメージには、そのアノテーションが含まれます:
 
@@ -404,24 +323,19 @@ skopeo inspect --raw docker://quay.io/crio/nginx-seccomp:v2 |
 "quay.io/crio/seccomp:v2"
 ```
 
->If I now use that image in an CRI-O test pod definition:
-
-そのイメージを使用して、CRI-Oのテストポッド定義に組み込む場合：
+そのイメージを使用して、CRI-OのテストPod定義に組み込む場合：
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
   name: pod
-  # no Pod annotations set
+  # Podのアノテーションが設定されていません
 spec:
   containers:
     - name: container
       image: quay.io/crio/nginx-seccomp:v2
 ```
-
->Then the CRI-O logs will indicate that the image annotation got evaluated and
-the profile got applied:
 
 その後、CRI-Oのログには、イメージのアノテーションが評価され、プロファイルが適用されたことが示されます:
 
@@ -466,13 +380,9 @@ sudo crictl inspect $CONTAINER_ID | jq .info.runtimeSpec.linux.seccomp | head
     {
 ```
 
->For container images, the annotation `seccomp-profile.kubernetes.cri-o.io` will
-be treated in the same way as `seccomp-profile.kubernetes.cri-o.io/POD` and
-applies to the whole pod. In addition to that, the whole feature also works when
-using the container specific annotation on an image, for example if a container
-is named `container1`:
-
-コンテナイメージの場合、アノテーション`seccomp-profile.kubernetes.cri-o.io`は`seccomp-profile.kubernetes.cri-o.io/POD`と同様に扱われ、ポッド全体に適用されます。さらに、この機能は、イメージにコンテナ固有のアノテーションを使用する場合にも機能します。たとえば、コンテナの名前が`container1`の場合：
+コンテナイメージの場合、アノテーション`seccomp-profile.kubernetes.cri-o.io`は`seccomp-profile.kubernetes.cri-o.io/POD`と同様に扱われ、Pod全体に適用されます。
+さらに、この機能は、イメージにコンテナ固有のアノテーションを使用する場合にも機能します。
+たとえば、コンテナの名前が`container1`の場合：
 
 ```shell
 skopeo inspect --raw docker://quay.io/crio/nginx-seccomp:v2-container |
@@ -483,26 +393,17 @@ skopeo inspect --raw docker://quay.io/crio/nginx-seccomp:v2-container |
 "quay.io/crio/seccomp:v2"
 ```
 
->The cool thing about this whole feature is that users can now create seccomp
-profiles for specific container images and store them side by side in the same
-registry. Linking the images to the profiles provides a great flexibility to
-maintain them over the whole application's life cycle.
-
-この機能の素晴らしい点は、ユーザーが特定のコンテナイメージ用のseccompプロファイルを作成し、同じレジストリ内に並べて保存できることです。イメージをプロファイルにリンクすることで、アプリケーション全体のライフサイクルを通じてそれらを維持する柔軟性が提供されます。
+この機能の素晴らしい点は、ユーザーが特定のコンテナイメージ用のseccompプロファイルを作成し、同じレジストリ内に並べて保存できることです。
+イメージをプロファイルにリンクすることで、アプリケーション全体のライフサイクルを通じてそれらを維持する柔軟性が提供されます。
 
 ### ORASを使用してプロファイルをプッシュする
 
->The actual creation of the OCI object that contains a seccomp profile requires a
-bit more work when using ORAS. I have the hope that tools like Podman will
-simplify the overall process in the future. Right now, the container registry
-needs to be [OCI compatible](https://oras.land/docs/compatible_oci_registries/#registries-supporting-oci-artifacts),
-which is also the case for [Quay.io](https://quay.io). CRI-O expects the seccomp
-profile object to have a container image media type
-(`application/vnd.cncf.seccomp-profile.config.v1+json`), while ORAS uses
-`application/vnd.oci.empty.v1+json` per default. To achieve all of that, the
-following commands can be executed:
-
-OCIオブジェクトを作成してseccompプロファイルを含めるには、ORASを使用する場合、もう少し作業が必要です。将来的には、Podmanなどのツールが全体のプロセスをより簡略化することを期待しています。現時点では、コンテナレジストリが[OCI互換](https://oras.land/docs/compatible_oci_registries/#registries-supporting-oci-artifacts)である必要があります。これは[Quay.io](https://quay.io)の場合も同様です。CRI-Oは、seccompプロファイルオブジェクトがコンテナイメージメディアタイプ（`application/vnd.cncf.seccomp-profile.config.v1+json`）を持っていることを期待していますが、ORASはデフォルトで`application/vnd.oci.empty.v1+json`を使用します。これを実現するために、次のコマンドを実行できます：
+OCIオブジェクトを作成してseccompプロファイルを含めるには、ORASを使用する場合、もう少し作業が必要です。
+将来的には、Podmanなどのツールが全体のプロセスをより簡略化することを期待しています。
+現時点では、コンテナレジストリが[OCI互換](https://oras.land/docs/compatible_oci_registries/#registries-supporting-oci-artifacts)である必要があります。
+これは[Quay.io](https://quay.io)の場合も同様です。
+CRI-Oは、seccompプロファイルオブジェクトがコンテナイメージメディアタイプ(`application/vnd.cncf.seccomp-profile.config.v1+json`)を持っていることを期待していますが、ORASはデフォルトで`application/vnd.oci.empty.v1+json`を使用します。
+これを実現するために、次のコマンドを実行できます：
 
 ```shell
 echo "{}" > config.json
@@ -511,30 +412,19 @@ oras push \
      quay.io/crio/seccomp:v2 seccomp.json
 ```
 
->The resulting image contains the `mediaType` that CRI-O expects. ORAS pushes a
-single layer `seccomp.json` to the registry. The name of the profile does not
-matter much. CRI-O will pick the first layer and check if that can act as a
-seccomp profile.
-
-結果として得られるイメージには、CRI-Oが期待する`mediaType`が含まれています。ORASは単一のレイヤー`seccomp.json` をレジストリにプッシュします。プロファイルの名前はあまり重要ではありません。CRI-Oは最初のレイヤーを選択し、それがseccompプロファイルとして機能するかどうかを確認します。
+結果として得られるイメージには、CRI-Oが期待する`mediaType`が含まれています。
+ORASは単一のレイヤー`seccomp.json` をレジストリにプッシュします。
+プロファイルの名前はあまり重要ではありません。
+CRI-Oは最初のレイヤーを選択し、それがseccompプロファイルとして機能するかどうかを確認します。
 
 ## 将来の作業
 
->CRI-O internally manages the OCI artifacts like regular files. This provides the
-benefit of moving them around, removing them if not used any more or having any
-other data available than seccomp profiles. This enables future enhancements in
-CRI-O on top of OCI artifacts, but also allows thinking about stacking seccomp
-profiles as part of having multiple layers in an OCI artifact. The limitation
-that it only works for `Unconfined` workloads for v1.30.x releases is something
-different CRI-O would like to address in the future. Simplifying the overall
-user experience by not compromising security seems to be the key for a
-successful future of seccomp in container workloads.
+CRI-OはOCIアーティファクトを通常のファイルと同様に内部で管理しています。
+これにより、それらを移動したり、使用されなくなった場合に削除したり、seccompプロファイル以外のデータを利用したりする利点が得られます。
+これにより、OCIアーティファクトをベースにしたCRI-Oの将来の拡張が可能になります。
+また、OCIアーティファクトの中に複数のレイヤーを持つことを考える上で、seccompプロファイルの積層も可能になります。
+v1.30.xリリースでは`Unconfined`ワークロードのみがサポートされている制限は、将来CRI-Oが解決したい課題です。
+セキュリティを損なうことなく、全体的なユーザーエクスペリエンスを簡素化することが、コンテナワークロードにおけるseccompの成功の鍵となるようです。
 
-CRI-OはOCIアーティファクトを通常のファイルと同様に内部で管理しています。これにより、それらを移動したり、使用されなくなった場合に削除したり、seccompプロファイル以外のデータを利用したりする利点が得られます。これにより、OCIアーティファクトをベースにしたCRI-Oの将来の拡張が可能になります。また、OCIアーティファクトの中に複数のレイヤーを持つことを考える上で、seccompプロファイルのスタッキングも可能になります。v1.30.xリリースでは`Unconfined`ワークロードのみがサポートされている制限は、将来CRI-Oが解決したい課題です。セキュリティを損なうことなく、全体的なユーザーエクスペリエンスを簡素化することが、コンテナワークロードにおけるseccompの成功の鍵となるようです。
-
->The CRI-O maintainers will be happy to listen to any feedback or suggestions on
-the new feature! Thank you for reading this blog post, feel free to reach out
-to the maintainers via the Kubernetes [Slack channel #crio](https://kubernetes.slack.com/messages/CAZH62UR1)
-or create an issue in the [GitHub repository](https://github.com/cri-o/cri-o).
-
-CRI-Oのメンテナーは、新機能に関するフィードバックや提案を歓迎します！このブログ投稿を読んでいただき、ぜひKubernetesの[Slackチャンネル#crio](https://kubernetes.slack.com/messages/CAZH62UR1)を通じてメンテナーに連絡したり、[GitHubリポジトリ](https://github.com/cri-o/cri-o)でIssueを作成したりしてください。
+CRI-Oのメンテナーは、新機能に関するフィードバックや提案を歓迎します！
+このブログ投稿を読んでいただき、ぜひKubernetesの[Slackチャンネル#crio](https://kubernetes.slack.com/messages/CAZH62UR1)を通じてメンテナーに連絡したり、[GitHubリポジトリ](https://github.com/cri-o/cri-o)でIssueを作成したりしてください。
