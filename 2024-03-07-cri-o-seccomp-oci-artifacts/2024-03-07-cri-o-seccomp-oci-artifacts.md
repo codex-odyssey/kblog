@@ -5,11 +5,11 @@ date: 2024-03-07
 slug: cri-o-seccomp-oci-artifacts
 ---
 
-**Author:** Sascha Grunert
+**著者:** Sascha Grunert
 
 seccompはセキュアなコンピューティングモードを意味し、Linuxカーネルのバージョン2.6.12以降の機能として提供されました。
 これは、プロセスの特権をサンドボックス化し、ユーザースペースからカーネルへの呼び出しを制限するために使用できます。
-Kubernetesでは、ノードにロードされたseccompプロファイルをPodやコンテナに自動的に適用することができます。
+Kubernetesでは、ノードに読み込まれたseccompプロファイルをPodやコンテナに自動的に適用することができます。
 
 しかし、Kubernetesでseccompプロファイルを配布することは大きな課題です。
 なぜなら、JSONファイルがワークロードが実行可能なすべてのノードで利用可能でなければならないからです。
@@ -173,7 +173,7 @@ allowed_annotations = [
 これは、ソースからビルドするか、[静的バイナリバンドル](https://github.com/cri-o/packaging?tab=readme-ov-file#using-the-static-binary-bundles-directly)を使用するか、[プレリリースパッケージ](https://github.com/cri-o/packaging?tab=readme-ov-file#usage)を使用することで行うことができます。
 
 これを実証するために、[`local-up-cluster.sh`](https://github.com/cri-o/cri-o?tab=readme-ov-file#running-kubernetes-with-cri-o)を使って単一ノードのKubernetesクラスターをセットアップし、コマンドラインから`crio`バイナリを実行しました。
-クラスターが起動して実行されているので、seccomp `Unconfined`として実行されているアノテーションのないポッドを試してみましょう:
+クラスターが起動して実行されているので、seccomp `Unconfined`として実行されているアノテーションのないPodを試してみましょう:
 
 ```shell
 cat pod.yaml
@@ -284,7 +284,7 @@ sudo crictl inspect $CONTAINER_ID | jq .info.runtimeSpec.linux.seccomp | head
     {
 ```
 
-ユーザーが接尾辞`/container`を予約名`/POD`に置き換えると、ポッド内のすべてのコンテナに対して同じことが機能します。
+ユーザーが接尾辞`/container`を予約名`/POD`に置き換えると、Pod内のすべてのコンテナに対して同じことが機能します。
 たとえば:
 
 ```yaml
@@ -423,7 +423,7 @@ CRI-OはOCIアーティファクトを通常のファイルと同様に内部で
 これにより、それらを移動したり、使用されなくなった場合に削除したり、seccompプロファイル以外のデータを利用したりする利点が得られます。
 これにより、OCIアーティファクトをベースにしたCRI-Oの将来の拡張が可能になります。
 また、OCIアーティファクトの中に複数のレイヤーを持つことを考える上で、seccompプロファイルの積層も可能になります。
-v1.30.xリリースでは`Unconfined`ワークロードのみがサポートされている制限は、将来CRI-Oが解決したい課題です。
+v1.30.xリリースでは`Unconfined`ワークロードのみがサポートされているという制限は、将来CRI-Oが解決したい課題です。
 セキュリティを損なうことなく、全体的なユーザーエクスペリエンスを簡素化することが、コンテナワークロードにおけるseccompの成功の鍵となるようです。
 
 CRI-Oのメンテナーは、新機能に関するフィードバックや提案を歓迎します！
